@@ -7,8 +7,11 @@ import (
 
 func NewGorm() fx.Option {
 	return fx.Provide(
-		func(opts gormtx.Opts) (*gormtx.TxManager, error) {
-			return gormtx.New(opts)
-		},
+		fx.Annotate(
+			func(opts gormtx.Opts) (*gormtx.TxManager, error) {
+				return gormtx.New(opts)
+			},
+			fx.As(new(TxManager)),
+		),
 	)
 }
