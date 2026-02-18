@@ -9,7 +9,7 @@ import (
 func (tx *TxManager) GetConnection(ctx context.Context) *gorm.DB {
 	v, ok := ctx.Value(contextKey).(*gorm.DB)
 	if !ok {
-		return tx.db.WithContext(ctx)
+		return tx.GetRawConnection(ctx)
 	}
 
 	return v.WithContext(ctx)

@@ -16,4 +16,8 @@ type TxManager interface {
 	GetConnection(
 		ctx context.Context,
 	) *gorm.DB
+
+	GetRawConnection(
+		ctx context.Context,
+	) *gorm.DB
 }
