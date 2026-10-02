@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/dehwyy/txmanagerfx/pkg/txmanager/internal/txcore"
 )
 
 func TestRunReturnsErrorWhenCallbackPanics(t *testing.T) {
-	manager := &TxManager{}
+	manager := newBare()
 
 	err := manager.run(
 		context.Background(),
@@ -28,7 +30,7 @@ func TestRunReturnsErrorWhenCallbackPanics(t *testing.T) {
 }
 
 func TestRunReturnsErrorWhenCallbackPanicsWithError(t *testing.T) {
-	manager := &TxManager{}
+	manager := newBare()
 
 	err := manager.run(
 		context.Background(),
@@ -45,7 +47,7 @@ func TestRunReturnsErrorWhenCallbackPanicsWithError(t *testing.T) {
 }
 
 func TestRunPassesThroughSuccess(t *testing.T) {
-	manager := &TxManager{}
+	manager := newBare()
 
 	err := manager.run(
 		context.Background(),
@@ -62,7 +64,7 @@ func TestRunPassesThroughSuccess(t *testing.T) {
 }
 
 func TestRunPassesThroughCallbackError(t *testing.T) {
-	manager := &TxManager{}
+	manager := newBare()
 	sentinel := errors.New("callback failed")
 
 	err := manager.run(
@@ -80,5 +82,12 @@ func TestRunPassesThroughCallbackError(t *testing.T) {
 
 	if errors.Is(err, ErrPanic) {
 		t.Fatal("a plain callback error must not be reported as a panic")
+	}
+}
+
+func newBare() *TxManager {
+	return &TxManager{
+		logger:  txcore.NopLogger(),
+		timeout: defaultTimeout,
 	}
 }

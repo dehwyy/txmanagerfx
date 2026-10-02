@@ -195,3 +195,38 @@ func TestTopLevelDoPanicRollsBack(t *testing.T) {
 
 	assertNames(t, manager)
 }
+
+func TestNestedDoThreeLevelsSavepointChain(t *testing.T) {
+	manager := newTestManager(t)
+	sentinel := errors.New("level 3 failed")
+
+	err := manager.Do(context.Background(), "l1", func(ctx context.Context) error {
+		if err := insert(ctx, manager, "l1"); err != nil {
+			return err
+		}
+
+		return manager.Do(ctx, "l2", func(ctx context.Context) error {
+			if err := insert(ctx, manager, "l2"); err != nil {
+				return err
+			}
+
+			l3Err := manager.Do(ctx, "l3", func(ctx context.Context) error {
+				if err := insert(ctx, manager, "l3"); err != nil {
+					return err
+				}
+
+				return sentinel
+			})
+			if !errors.Is(l3Err, sentinel) {
+				t.Fatalf("expected sentinel, got %v", l3Err)
+			}
+
+			return insert(ctx, manager, "l2-after")
+		})
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	assertNames(t, manager, "l1", "l2", "l2-after")
+}
