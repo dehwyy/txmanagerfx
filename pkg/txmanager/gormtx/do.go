@@ -14,7 +14,12 @@ func (tx *TxManager) Do(
 	txName string,
 	fn func(ctx context.Context) error,
 ) error {
-	err := tx.db.Transaction(
+	root := tx.db
+	if existing, ok := ctx.Value(contextKey).(*gorm.DB); ok {
+		root = existing.WithContext(ctx)
+	}
+
+	err := root.Transaction(
 		func(conn *gorm.DB) error {
 			return tx.run(
 				ctx,
