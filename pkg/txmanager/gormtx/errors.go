@@ -1,5 +1,8 @@
 package gormtx
 
-import "errors"
+import "github.com/dehwyy/txmanagerfx/pkg/txmanager/internal/txcore"
 
-var ErrPanic = errors.New("panic during transaction")
+var (
+	ErrPanic         = txcore.ErrPanic
+	ErrRetryInNested = txcore.ErrRetryInNested
+)

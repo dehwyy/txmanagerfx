@@ -11,6 +11,7 @@ type TxManager interface {
 		ctx context.Context,
 		txName string,
 		fn func(ctx context.Context) error,
+		opts ...Option,
 	) error
 
 	GetConnection(
@@ -20,4 +21,8 @@ type TxManager interface {
 	GetRawConnection(
 		ctx context.Context,
 	) *gorm.DB
+
+	InTransaction(
+		ctx context.Context,
+	) bool
 }
