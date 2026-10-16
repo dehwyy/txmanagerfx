@@ -41,6 +41,7 @@ func (tx *TxManager) Do(
 			ctx,
 			txName,
 			existing,
+			applied,
 			fn,
 		)
 		if err == nil || attempt == attempts || !txcore.Retryable(err) {
@@ -86,10 +87,19 @@ func (tx *TxManager) attempt(
 	ctx context.Context,
 	txName string,
 	existing *gorm.DB,
+	applied txcore.Options,
 	fn func(ctx context.Context) error,
 ) error {
 	if existing == nil {
 		return tx.attemptRoot(
+			ctx,
+			txName,
+			fn,
+		)
+	}
+
+	if txcore.IsFlat(ctx) && !applied.Savepoint {
+		return tx.runFlat(
 			ctx,
 			txName,
 			fn,

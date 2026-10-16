@@ -16,7 +16,7 @@ func (tx *TxManager) attemptRoot(
 
 	err := tx.db.Transaction(
 		func(conn *gorm.DB) error {
-			return tx.run(
+			if err := tx.run(
 				txcore.WithScope(
 					ctx,
 					scope,
@@ -24,7 +24,11 @@ func (tx *TxManager) attemptRoot(
 				txName,
 				conn,
 				fn,
-			)
+			); err != nil {
+				return err
+			}
+
+			return scope.Verdict(tx.logger)
 		},
 	)
 	if err != nil {

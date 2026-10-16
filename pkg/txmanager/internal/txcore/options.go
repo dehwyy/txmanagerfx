@@ -5,8 +5,9 @@ import "time"
 type Backoff func(attempt int) time.Duration
 
 type Options struct {
-	Attempts int
-	Backoff  Backoff
+	Attempts  int
+	Backoff   Backoff
+	Savepoint bool
 }
 
 type Option func(*Options)

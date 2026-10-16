@@ -2,8 +2,6 @@ package gormtx
 
 import (
 	"context"
-	"fmt"
-	"runtime/debug"
 
 	"github.com/dehwyy/txmanagerfx/pkg/txmanager/internal/txcore"
 	"gorm.io/gorm"
@@ -17,19 +15,18 @@ func (tx *TxManager) run(
 ) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			tx.logger.Error(
-				"panic occurred during transaction",
-				"panic", fmt.Sprint(r),
-				"tx_name", txName,
-				"stack", string(debug.Stack()),
+			err = tx.panicked(
+				txName,
+				r,
 			)
-
-			err = fmt.Errorf("%w in %s: %v", ErrPanic, txName, r)
 		}
 	}()
 
 	ctx, cancel := context.WithTimeout(
-		txcore.WithConn(ctx, conn),
+		txcore.WithConn(
+			ctx,
+			conn,
+		),
 		tx.timeout,
 	)
 	defer cancel()

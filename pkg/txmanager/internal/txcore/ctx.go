@@ -11,6 +11,7 @@ type ctxKey struct{}
 type entry struct {
 	conn   *gorm.DB
 	active bool
+	flat   bool
 	scope  *Scope
 }
 

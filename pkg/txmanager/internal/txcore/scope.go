@@ -13,8 +13,11 @@ type root struct {
 }
 
 type Scope struct {
-	root      *root
-	name      string
-	mark      int
-	savepoint bool
+	root       *root
+	name       string
+	mark       int
+	savepoint  bool
+	failed     bool
+	failedName string
+	failedErr  error
 }

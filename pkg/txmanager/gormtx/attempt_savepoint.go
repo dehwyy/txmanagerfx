@@ -21,7 +21,7 @@ func (tx *TxManager) attemptSavepoint(
 		func(conn *gorm.DB) error {
 			scope = parent.OpenSavepoint(txName)
 
-			return tx.run(
+			if err := tx.run(
 				txcore.WithScope(
 					ctx,
 					scope,
@@ -29,7 +29,11 @@ func (tx *TxManager) attemptSavepoint(
 				txName,
 				conn,
 				fn,
-			)
+			); err != nil {
+				return err
+			}
+
+			return scope.Verdict(tx.logger)
 		},
 	)
 	if err != nil {
