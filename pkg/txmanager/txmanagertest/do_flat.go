@@ -11,11 +11,15 @@ func (f *Fake) doFlat(
 	txName string,
 	fn func(ctx context.Context) error,
 ) error {
-	err := f.call(
-		ctx,
-		txName,
-		fn,
-	)
+	err := f.DoErr
+	if err == nil {
+		err = f.call(
+			ctx,
+			txName,
+			fn,
+		)
+	}
+
 	if err != nil {
 		txcore.ScopeOf(ctx).Fail(
 			txName,

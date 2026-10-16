@@ -28,20 +28,20 @@ func (f *Fake) Do(
 		return txmanager.ErrRetryInNested
 	}
 
-	if f.DoErr != nil {
-		return f.DoErr
-	}
-
-	if !nested {
-		return f.doRoot(
+	if nested && flat && !applied.Savepoint {
+		return f.doFlat(
 			ctx,
 			txName,
 			fn,
 		)
 	}
 
-	if flat && !applied.Savepoint {
-		return f.doFlat(
+	if f.DoErr != nil {
+		return f.DoErr
+	}
+
+	if !nested {
+		return f.doRoot(
 			ctx,
 			txName,
 			fn,
