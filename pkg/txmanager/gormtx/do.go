@@ -15,18 +15,19 @@ func (tx *TxManager) Do(
 ) error {
 	applied := txcore.Apply(opts)
 
-	root := tx.db
-	nested := false
-	if existing, ok := txcore.Conn(ctx); ok {
-		root = existing.WithContext(ctx)
-		nested = true
+	var existing *gorm.DB
+	if conn, ok := txcore.Conn(ctx); ok {
+		existing = conn.WithContext(ctx)
 	}
 
-	if nested && applied.Attempts > 0 {
+	if existing != nil && applied.Attempts > 0 {
 		return ErrRetryInNested
 	}
 
-	attempts := max(applied.Attempts, 1)
+	attempts := max(
+		applied.Attempts,
+		1,
+	)
 
 	backoff := applied.Backoff
 	if backoff == nil {
@@ -39,7 +40,7 @@ func (tx *TxManager) Do(
 		err = tx.attempt(
 			ctx,
 			txName,
-			root,
+			existing,
 			fn,
 		)
 		if err == nil || attempt == attempts || !txcore.Retryable(err) {
@@ -50,13 +51,20 @@ func (tx *TxManager) Do(
 
 		tx.logger.Warn(
 			"transaction retry",
-			"tx_name", txName,
-			"attempt", attempt,
-			"backoff", delay,
-			"error", err,
+			"tx_name",
+			txName,
+			"attempt",
+			attempt,
+			"backoff",
+			delay,
+			"error",
+			err,
 		)
 
-		if waitErr := txcore.Wait(ctx, delay); waitErr != nil {
+		if waitErr := txcore.Wait(
+			ctx,
+			delay,
+		); waitErr != nil {
 			return err
 		}
 	}
@@ -64,8 +72,10 @@ func (tx *TxManager) Do(
 	if err != nil && ctx.Err() != nil {
 		tx.logger.Warn(
 			"transaction context timeout/cancelled",
-			"tx_name", txName,
-			"error", ctx.Err(),
+			"tx_name",
+			txName,
+			"error",
+			ctx.Err(),
 		)
 	}
 
@@ -75,17 +85,21 @@ func (tx *TxManager) Do(
 func (tx *TxManager) attempt(
 	ctx context.Context,
 	txName string,
-	root *gorm.DB,
+	existing *gorm.DB,
 	fn func(ctx context.Context) error,
 ) error {
-	return root.Transaction(
-		func(conn *gorm.DB) error {
-			return tx.run(
-				ctx,
-				txName,
-				conn,
-				fn,
-			)
-		},
+	if existing == nil {
+		return tx.attemptRoot(
+			ctx,
+			txName,
+			fn,
+		)
+	}
+
+	return tx.attemptSavepoint(
+		ctx,
+		txName,
+		existing,
+		fn,
 	)
 }

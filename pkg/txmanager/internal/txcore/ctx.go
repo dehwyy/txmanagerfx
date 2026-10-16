@@ -11,6 +11,7 @@ type ctxKey struct{}
 type entry struct {
 	conn   *gorm.DB
 	active bool
+	scope  *Scope
 }
 
 func lookup(ctx context.Context) entry {
@@ -22,32 +23,38 @@ func lookup(ctx context.Context) entry {
 	return v
 }
 
-func WithConn(ctx context.Context, conn *gorm.DB) context.Context {
+func store(ctx context.Context, found entry) context.Context {
 	return context.WithValue(
 		ctx,
 		ctxKey{},
-		entry{
-			conn:   conn,
-			active: true,
-		},
+		found,
+	)
+}
+
+func WithConn(ctx context.Context, conn *gorm.DB) context.Context {
+	found := lookup(ctx)
+	found.conn = conn
+	found.active = true
+
+	return store(
+		ctx,
+		found,
 	)
 }
 
 func MarkActive(ctx context.Context) context.Context {
-	return context.WithValue(
+	found := lookup(ctx)
+	found.active = true
+
+	return store(
 		ctx,
-		ctxKey{},
-		entry{
-			conn:   lookup(ctx).conn,
-			active: true,
-		},
+		found,
 	)
 }
 
 func Detach(ctx context.Context) context.Context {
-	return context.WithValue(
+	return store(
 		ctx,
-		ctxKey{},
 		entry{},
 	)
 }
