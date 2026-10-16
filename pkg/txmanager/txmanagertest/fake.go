@@ -10,12 +10,15 @@ import (
 var _ txmanager.TxManager = (*Fake)(nil)
 
 type Call struct {
-	Name   string
-	Nested bool
+	Name      string
+	Nested    bool
+	Flat      bool
+	Savepoint bool
 }
 
 type Fake struct {
-	DB *gorm.DB
+	DB     *gorm.DB
+	Logger txmanager.Logger
 
 	DoErr     error
 	CommitErr error
