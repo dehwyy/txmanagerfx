@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.2.0
+
+Added:
+- `txmanager.AfterCommit(ctx, fn) bool`: effects registered on the root transaction run after a successful COMMIT, in order, before `Do` returns; dropped on rollback, COMMIT failure, retried attempts and savepoint rollback of their area.
+- `txmanager.Flat(ctx)`: nested `Do` below the marker joins the transaction without SAVEPOINT; a failure marks the area rollback-only and the root rolls back with `ErrFlatNestedFailed`.
+- `txmanager.WithSavepoint()`: nested `Do` keeps SAVEPOINT under Flat and isolates its area.
+- `txmanager.ErrFlatNestedFailed` and `gormtx.ErrFlatNestedFailed`.
+- Warn `subtransaction count exceeded 64`, once per root attempt.
+- `txmanagertest`: Fake support for `AfterCommit`, `Flat`, `WithSavepoint`; `Call.Flat`, `Call.Savepoint`, optional `Fake.Logger`.
+- SQL regression tests for the default nested SAVEPOINT path.
+
 ## v0.1.0
 
 Breaking:
