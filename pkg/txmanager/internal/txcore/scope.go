@@ -6,10 +6,12 @@ import (
 )
 
 type root struct {
-	name    string
-	mu      sync.Mutex
-	effects []func(context.Context) error
-	closed  bool
+	name       string
+	mu         sync.Mutex
+	effects    []func(context.Context) error
+	closed     bool
+	savepoints int
+	warned     bool
 }
 
 type Scope struct {

@@ -19,7 +19,10 @@ func (tx *TxManager) attemptSavepoint(
 
 	err := existing.Transaction(
 		func(conn *gorm.DB) error {
-			scope = parent.OpenSavepoint(txName)
+			scope = parent.OpenSavepoint(
+				txName,
+				tx.logger,
+			)
 
 			if err := tx.run(
 				txcore.WithScope(
