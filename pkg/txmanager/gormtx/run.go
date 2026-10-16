@@ -14,10 +14,10 @@ func (tx *TxManager) run(
 	fn func(ctx context.Context) error,
 ) (err error) {
 	defer func() {
-		if r := recover(); r != nil {
+		if recovered := recover(); recovered != nil {
 			err = tx.panicked(
 				txName,
-				r,
+				recovered,
 			)
 		}
 	}()

@@ -34,13 +34,13 @@ func runEffect(
 	effect func(context.Context) error,
 ) {
 	defer func() {
-		if r := recover(); r != nil {
+		if recovered := recover(); recovered != nil {
 			logger.Error(
 				"after-commit effect panicked",
 				"tx_name",
 				txName,
 				"panic",
-				fmt.Sprint(r),
+				fmt.Sprint(recovered),
 				"stack",
 				string(debug.Stack()),
 			)

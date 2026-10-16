@@ -13,12 +13,12 @@ func (f *Fake) call(
 	fn func(ctx context.Context) error,
 ) (err error) {
 	defer func() {
-		if r := recover(); r != nil {
+		if recovered := recover(); recovered != nil {
 			err = fmt.Errorf(
 				"%w in %s: %v",
 				txmanager.ErrPanic,
 				txName,
-				r,
+				recovered,
 			)
 		}
 	}()
