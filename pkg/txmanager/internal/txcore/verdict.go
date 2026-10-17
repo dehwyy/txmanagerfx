@@ -19,7 +19,7 @@ func (s *Scope) Verdict(logger Logger) error {
 
 	if s.savepoint {
 		logger.Warn(
-			"flat nested transaction failed, savepoint rolled back",
+			"savepoint area rolled back after flat nested failure",
 			"tx_name",
 			s.root.name,
 			"savepoint_tx_name",

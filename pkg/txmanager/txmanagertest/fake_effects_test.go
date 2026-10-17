@@ -458,7 +458,7 @@ func TestFakeWithSavepointUnderFlat(t *testing.T) {
 	)
 	require.Equal(
 		t,
-		[]string{"flat nested transaction failed, savepoint rolled back"},
+		[]string{"savepoint area rolled back after flat nested failure"},
 		logger.warns,
 	)
 	require.Equal(

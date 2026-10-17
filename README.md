@@ -108,7 +108,7 @@ In PostgreSQL a failed statement aborts the whole transaction: under Flat every 
 `txmanager.WithSavepoint()` forces a nested `Do` through SAVEPOINT even under Flat. Use it for writes whose failure the caller deliberately ignores.
 
 - It opens a new area. On an error the database rolls back to the savepoint, the effects of the area are dropped, the error goes to the caller and the parent area is not marked.
-- Flat nested calls inside it mark this area, not the root. When its `fn` returns nil while the area is rollback-only, the `Do` rolls back to the savepoint and returns `ErrFlatNestedFailed` wrapping the original error, and logs `Warn("flat nested transaction failed, savepoint rolled back", tx_name, savepoint_tx_name, nested_tx_name, error)`.
+- Flat nested calls inside it mark this area, not the root. When its `fn` returns nil while the area is rollback-only, the `Do` rolls back to the savepoint and returns `ErrFlatNestedFailed` wrapping the original error, and logs `Warn("savepoint area rolled back after flat nested failure", tx_name, savepoint_tx_name, nested_tx_name, error)`.
 - On a root `Do` it is a no-op. Without Flat a nested `Do` already uses SAVEPOINT, so the option changes nothing.
 
 ### Subtransaction counter
@@ -134,10 +134,12 @@ type Logger interface {
 | Warn | `transaction context timeout/cancelled` |
 | Warn | `after-commit effect failed` |
 | Warn | `flat nested transaction failed, root rolled back` |
-| Warn | `flat nested transaction failed, savepoint rolled back` |
+| Warn | `savepoint area rolled back after flat nested failure` |
 | Warn | `subtransaction count exceeded 64` |
 | Error | `panic occurred during transaction` |
 | Error | `after-commit effect panicked` |
+
+Only the root warning means that the whole root transaction was rolled back because of a Flat failure. Alert on the exact message `flat nested transaction failed, root rolled back`, not on the substring: the text of `ErrFlatNestedFailed` is `flat nested transaction failed` and also reaches the logs of callers that ignore the error of a `WithSavepoint` area.
 
 ## Testing
 
