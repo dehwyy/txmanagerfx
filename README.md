@@ -99,7 +99,7 @@ A flat nested `Do`:
 - on an error or a panic marks the current area rollback-only, even when the caller swallows the error. The area is the root or the nearest `WithSavepoint` nested `Do`. Without SAVEPOINT the database cannot undo part of a transaction, so committing after a swallowed failure would commit a partial transaction;
 - rejects `WithRetry` with `ErrRetryInNested` without running `fn` and without marking.
 
-When the root `fn` returns nil while its area is rollback-only, the root rolls back and returns an error wrapping both `txmanager.ErrFlatNestedFailed` and the original error (`errors.Is` matches both). It logs `Warn("flat nested transaction failed, root rolled back", tx_name, nested_tx_name, error)`: the calling code relied on SAVEPOINT semantics. When the root `fn` returns an error itself, that error is returned as usual, without the warning. A retryable original error (`40001`, `40P01`) makes a root with `WithRetry` try again.
+When the root `fn` returns nil while its area is rollback-only, the root rolls back and returns an error wrapping both `txmanager.ErrFlatNestedFailed` and the original error (`errors.Is` matches both). It logs `Warn("flat nested transaction failed, root rolled back", tx_name, nested_tx_name, error)`: the calling code relied on SAVEPOINT semantics. When the root `fn` returns the flat error itself or wraps it, that error is returned as usual, without the warning. When the root `fn` returns another error while its area is rollback-only (in PostgreSQL usually `25P02` from the next statement after a swallowed failure), the root logs the same warning and returns that error wrapping `ErrFlatNestedFailed` and the original error: `errors.Is` and `errors.As` see the error of `fn` first, so retry and transient checks follow it. A retryable original error (`40001`, `40P01`) makes a root with `WithRetry` try again.
 
 In PostgreSQL a failed statement aborts the whole transaction: under Flat every later statement fails with `25P02` until the rollback.
 
@@ -108,7 +108,7 @@ In PostgreSQL a failed statement aborts the whole transaction: under Flat every 
 `txmanager.WithSavepoint()` forces a nested `Do` through SAVEPOINT even under Flat. Use it for writes whose failure the caller deliberately ignores.
 
 - It opens a new area. On an error the database rolls back to the savepoint, the effects of the area are dropped, the error goes to the caller and the parent area is not marked.
-- Flat nested calls inside it mark this area, not the root. When its `fn` returns nil while the area is rollback-only, the `Do` rolls back to the savepoint and returns `ErrFlatNestedFailed` wrapping the original error, and logs `Warn("savepoint area rolled back after flat nested failure", tx_name, savepoint_tx_name, nested_tx_name, error)`.
+- Flat nested calls inside it mark this area, not the root. When its `fn` returns nil while the area is rollback-only, the `Do` rolls back to the savepoint and returns `ErrFlatNestedFailed` wrapping the original error, and logs `Warn("savepoint area rolled back after flat nested failure", tx_name, savepoint_tx_name, nested_tx_name, error)`. When its `fn` returns another error in that state, the warning is the same and the returned error wraps that error, `ErrFlatNestedFailed` and the original error, as on the root.
 - On a root `Do` it is a no-op. Without Flat a nested `Do` already uses SAVEPOINT, so the option changes nothing.
 
 ### Subtransaction counter

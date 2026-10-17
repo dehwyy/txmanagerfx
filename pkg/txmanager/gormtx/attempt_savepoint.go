@@ -24,7 +24,7 @@ func (tx *TxManager) attemptSavepoint(
 				tx.logger,
 			)
 
-			if err := tx.run(
+			runErr := tx.run(
 				txcore.WithScope(
 					ctx,
 					scope,
@@ -32,11 +32,12 @@ func (tx *TxManager) attemptSavepoint(
 				txName,
 				conn,
 				fn,
-			); err != nil {
-				return err
-			}
+			)
 
-			return scope.Verdict(tx.logger)
+			return scope.Verdict(
+				tx.logger,
+				runErr,
+			)
 		},
 	)
 	if err != nil {

@@ -1,10 +1,13 @@
 package txcore
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
-func (s *Scope) Verdict(logger Logger) error {
+func (s *Scope) Verdict(logger Logger, err error) error {
 	if s == nil {
-		return nil
+		return err
 	}
 
 	s.root.mu.Lock()
@@ -14,7 +17,14 @@ func (s *Scope) Verdict(logger Logger) error {
 	s.root.mu.Unlock()
 
 	if !failed {
-		return nil
+		return err
+	}
+
+	if err != nil && errors.Is(
+		err,
+		failedErr,
+	) {
+		return err
 	}
 
 	if s.savepoint {
@@ -41,10 +51,20 @@ func (s *Scope) Verdict(logger Logger) error {
 		)
 	}
 
-	return fmt.Errorf(
+	verdict := fmt.Errorf(
 		"%w: %s: %w",
 		ErrFlatNestedFailed,
 		failedName,
 		failedErr,
+	)
+
+	if err == nil {
+		return verdict
+	}
+
+	return fmt.Errorf(
+		"%w: %w",
+		err,
+		verdict,
 	)
 }

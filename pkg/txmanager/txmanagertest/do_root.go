@@ -13,19 +13,19 @@ func (f *Fake) doRoot(
 ) error {
 	scope := txcore.OpenRoot(txName)
 
-	err := f.call(
-		txcore.MarkActive(
-			txcore.WithScope(
-				ctx,
-				scope,
+	err := scope.Verdict(
+		f.logger(),
+		f.call(
+			txcore.MarkActive(
+				txcore.WithScope(
+					ctx,
+					scope,
+				),
 			),
+			txName,
+			fn,
 		),
-		txName,
-		fn,
 	)
-	if err == nil {
-		err = scope.Verdict(f.logger())
-	}
 
 	if err == nil {
 		err = f.CommitErr
